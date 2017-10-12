@@ -8,8 +8,6 @@ import urllib
 
 picFilePath = 'your-path' #
 
-
-
 def set_SourcesPath(path):
     '''
     wicon path 
@@ -43,7 +41,7 @@ def fetchIp():
     cityid =  citycode.get(city.encode('utf-8'))
     return {'ip':ip,'city':city,'province':province,'id':cityid}
 
-'''从中国气象局获取7天天气预报，但其天气图标非png无法使用，故此函数为使用'''
+'''从中国气象局获取7天天气预报'''
 def fetchWeather(cityid):
     wlist = []
     url = 'http://www.weather.com.cn/weather/%s.shtml'%cityid
@@ -79,10 +77,8 @@ def picDownloader(picUrl,picName,fileSavePath=picFilePath):  #/home/pi//Download
     urllib.urlretrieve(picUrl,filename)
 
 
-'''从百度搜索天气页面中获取天气信息，包含实时天气和未来4天的天气预报'''
+'''获取天气信息，包含实时天气和未来4天的天气预报'''
 def fetch1weather():
-    '''百度搜索天气信息返回页面不需要js处理即可显示实时天气信息，其他网站实时天气信息均需要实时js处理，所以使用此方法'''
-    '''改进措施：处理其他天气网站的js'''
     page = htmldownloader('http://www.baidu.com/s?wd=实时天气')
     soup = BeautifulSoup(page,'lxml')
     '''获取今日实时天气信息'''
@@ -116,8 +112,6 @@ def fetch1weather():
                        }
     weatherInfoList.append(weathertdInfoDic)
 
-    #fetch4daysWeatherInfo
-    '''中国天气网的天气图标是png，没法用，所有只能舍弃7天预报，转而使用百度搜索天气结果中的信息，后期需做大量的改进'''
     weather4Infos = soup.find_all(class_='op_weather4_twoicon_day OP_LOG_LINK')
     for weather4Info in weather4Infos:
         weatherInfoDic = {}
@@ -134,7 +128,7 @@ def fetch1weather():
             turnTextIndex = wTextInfo.index(u'转')
             '''舍弃一部分信息,便于显示'''
             wTextInfo = wTextInfo[:turnTextIndex]
-        except Exception,e:
+        except Exception as e:
             pass
         windInfo = weather4Info.find(class_='op_weather4_twoicon_wind').getText().strip()
         weatherInfoDic ={'week':weekInfo,'date':dateInfo,'picInfo':picUrlInfo,'picUrl':picUrlInfo['picUrl'],'picName':picUrlInfo['picName'],
