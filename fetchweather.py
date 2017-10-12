@@ -6,7 +6,7 @@ import time
 import re
 import urllib
 
-picFilePath = '/Users/kang/KReminder/Sources/wicon/%s' #
+picFilePath = 'your-path' #
 
 
 
@@ -146,27 +146,110 @@ def fetch1weather():
     return weatherInfoList
 
 
+'''tts'''
+def text2voice(text):
+    # tex 必填  合成的文本，使用UTF-8编码。小于512个中文字或者英文数字。（文本在百度服务器内转换为GBK后，长度必须小于1024字节）
+    # tok 必填  开放平台获取到的开发者access_token（见上面的“鉴权认证机制”段落）
+    # cuid必填  用户唯一标识，用来区分用户，计算UV值。建议填写能区分用户的机器 MAC 地址或 IMEI 码，长度为60字符以内
+    # ctp 必填  客户端类型选择，web端填写固定值1
+    # lan 必填  固定值zh。语言选择,目前只有中英文混合模式，填写固定值zh
+    # spd 选填  语速，取值0-9，默认为5中语速
+    # pit 选填  音调，取值0-9，默认为5中语调
+    # vol 选填  音量，取值0-15，默认为5中音量
+    # per 选填  发音人选择, 0为普通女声，1为普通男生，3为情感合成-度逍遥，4为情感合成-度丫丫，默认为普通女声
+    url = 'http://tts.baidu.com/text2audio?idx=1&tok=your-token&tex=%s&cuid=baidu_speech_' \
+          'demo&cod=2&lan=zh&ctp=1&pdt=1&spd=5&per=0&vol=15&pit=6'%(text)
+    print (url)
+    # 直接播放语音
+    os.system('mplayer "%s"' % url)
+
+
 
 '''判断上下午'''
-def isam(time):
-    now = time
-    if time.tm_hour<12 :
-        return True
-    else:
-        return False
+def isam():
+    #0-6点是凌晨,6-11.59点是上午12点是中午12-18是下午,18-24是晚上
 
+    # now = time
+    import time as tm
+    time = tm.localtime()
+
+    if 0<= time.tm_hour <6 :
+        return '凌晨'
+    elif 6<= time.tm_hour <12:
+        return '上午'
+    elif time.tm_hour == 12:
+        return '中午'
+    elif 12 < time.tm_hour <=18:
+        return '下午'
+    elif 18 < time.tm_hour <24:
+        return '晚上'
+
+def numtozh(num):
+    num_dict = {1: u'一', 2: u'二', 3: u'三', 4: u'四', 5: u'五', 6: u'六', 7: u'七',
+                8: u'八', 9: u'九', 0: u'零'}
+    num = int(num)
+    if 100 <= num < 1000:
+        b_num = num // 100
+        s_num = (num-b_num*100) // 10
+        g_num = (num-b_num*100) % 10
+        if g_num == 0 and s_num == 0:
+            num = u'%s百' % (num_dict[b_num])
+        elif s_num == 0:
+            num = u'%s百%s%s' % (num_dict[b_num], num_dict.get(s_num, ''), num_dict.get(g_num, ''))
+        elif g_num == 0:
+            num = u'%s百%s十' % (num_dict[b_num], num_dict.get(s_num, ''))
+        else:
+            num = u'%s百%s十%s' % (num_dict[b_num], num_dict.get(s_num, ''), num_dict.get(g_num, ''))
+    elif 10 <= num < 100:
+        s_num = num // 10
+        g_num = (num-s_num*10) % 10
+        if g_num == 0:
+            g_num = ''
+        num = u'%s十%s' % (num_dict[s_num], num_dict.get(g_num, ''))
+    elif 0 <= num < 10:
+        g_num = num
+        num = u'%s' % (num_dict[g_num])
+    elif -10 < num < 0:
+        g_num = -num
+        num = u'零下%s' % (num_dict[g_num])
+    elif -100 < num <= -10:
+        num = -num
+        s_num = num // 10
+        g_num = (num-s_num*10) % 10
+        if g_num == 0:
+            g_num = ''
+        num = u'零下%s十%s' % (num_dict[s_num], num_dict.get(g_num, ''))
+    return num
+
+
+def speakWeather():
+    w1 = fetch1weather()    
+
+    date = w1[0]['date']
+    dateStr = date.replace(' ',',') #去空格
+    dateS = dateStr.replace('廿','二十')#将廿换成二十
+
+    temperature = w1[0]['tempnow']
+    temperatureStr = numtozh(temperature)
+
+    pm25Num = w1[0]['pm25']
+    pm25Str = numtozh(pm25Num)
+
+    
+    wt1 = u'%s好,今天是%s,实时天气为%s,温度为%s摄氏度,PM2.5为%s' % (isam(),dateS,\
+        w1[0]['wtext'][0:w1[0]['wtext'].find('(')], temperatureStr , pm25Str)
+
+    # print (wt1)
+    text2voice(wt1)
+    
 if __name__ == "__main__":
 
-    timenow = time.localtime()
-    isam = isam(timenow)
-    w1 = fetch1weather()
-    if isam :
-        text = u'上'
-    else :
-        text = u'下'
-    wt1 = u'%s午好，现在的实时天气为%s,温度为%s摄氏度，PM2.5为%s。' % (text,w1[0]['wtext'][0:w1[0]['wtext'].find('(')],w1[0]['tempnow'],w1[0]['pm25'])
-    tm = w1[0]['date']
-    print tm
-    print wt1
-    print w1[0]['sg']
-    # text2voice(wt1)
+
+    import sys
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+    # helloStr = isam()
+    # print ('{}好'.format(helloStr))
+    speakWeather()
+
+   
