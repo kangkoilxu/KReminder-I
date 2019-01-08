@@ -1,4 +1,6 @@
 # KReminder-I
+This is a gui project which can be implemented on Respberry Pi,
+It can automatically download the weather infomation.
 
 ###目录结构
 ---KReminder
